@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Talk Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Optima, 'Segoe UI', Candara, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            padding: 20px;
+        }
+
+        .question-box {
+            border: 3px solid #000000;
+            padding: 60px 80px;
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .question-box:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-box:active,
+        .question-box.clicked {
+            transform: scale(0.98);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-text {
+            font-size: 2rem;
+            line-height: 1.5;
+            color: #000000;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .nav-button {
+            font-family: Optima, 'Segoe UI', Candara, sans-serif;
+            font-size: 1.2rem;
+            padding: 12px 32px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.15s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .nav-button:active {
+            transform: scale(0.97);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-button:disabled:hover {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="question-box" id="questionBox">
+        <p class="question-text" id="questionText">Loading questions...</p>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-button" id="backButton" disabled>← Back</button>
+        <button class="nav-button" id="nextButton" disabled>Next →</button>
+    </div>
+
+    <script>
+        let questions = [];
+        let history = [];
+        let historyIndex = -1;
+
+        const questionBox = document.getElementById('questionBox');
+        const questionText = document.getElementById('questionText');
+        const backButton = document.getElementById('backButton');
+        const nextButton = document.getElementById('nextButton');
+
+        // Load questions from file
+        async function loadQuestions() {
+            try {
+                const response = await fetch('questions.txt');
+                const text = await response.text();
+                questions = text.split('\n').filter(q => q.trim() !== '');
+
+                if (questions.length > 0) {
+                    showRandomQuestion();
+                    nextButton.disabled = false;
+                } else {
+                    questionText.textContent = 'No questions found in file.';
+                }
+            } catch (error) {
+                questionText.textContent = 'Could not load questions file.';
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        // Get a random question that's different from the current one
+        function getRandomQuestion() {
+            if (questions.length === 0) return null;
+            if (questions.length === 1) return questions[0];
+
+            const currentQuestion = history.length > 0 ? history[historyIndex] : null;
+            let newQuestion;
+
+            do {
+                const randomIndex = Math.floor(Math.random() * questions.length);
+                newQuestion = questions[randomIndex];
+            } while (newQuestion === currentQuestion);
+
+            return newQuestion;
+        }
+
+        // Show a random question and add to history
+        function showRandomQuestion() {
+            const question = getRandomQuestion();
+            if (question) {
+                // Remove any forward history when going to a new random question
+                history = history.slice(0, historyIndex + 1);
+                history.push(question);
+                historyIndex = history.length - 1;
+
+                displayQuestion(question);
+                updateButtons();
+            }
+        }
+
+        // Display a question with animation
+        function displayQuestion(question) {
+            questionText.textContent = question;
+        }
+
+        // Animate the box click
+        function animateClick() {
+            questionBox.classList.add('clicked');
+            setTimeout(() => {
+                questionBox.classList.remove('clicked');
+            }, 100);
+        }
+
+        // Update navigation button states
+        function updateButtons() {
+            backButton.disabled = historyIndex <= 0;
+        }
+
+        // Go to previous question
+        function goBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                displayQuestion(history[historyIndex]);
+                updateButtons();
+            }
+        }
+
+        // Go to next question (new random one)
+        function goNext() {
+            animateClick();
+            showRandomQuestion();
+        }
+
+        // Event listeners
+        questionBox.addEventListener('click', goNext);
+        backButton.addEventListener('click', goBack);
+        nextButton.addEventListener('click', goNext);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+                if (!backButton.disabled) goBack();
+            } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                goNext();
+            }
+        });
+
+        // Start the app
+        loadQuestions();
+    </script>
+</body>
+</html>
