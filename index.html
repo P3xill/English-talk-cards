@@ -22,6 +22,204 @@
             padding: 20px;
         }
 
+        /* Header with timer and settings */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 25px;
+            background: #ffffff;
+            border-bottom: 2px solid #000000;
+            z-index: 100;
+        }
+
+        .settings-button {
+            position: absolute;
+            right: 25px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .settings-button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .session-timer {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #999;
+            font-variant-numeric: tabular-nums;
+            min-width: 90px;
+            text-align: center;
+        }
+
+        .session-timer.running {
+            color: #2e7d32;
+        }
+
+        .session-timer.warning {
+            color: #f57c00;
+        }
+
+        .session-timer.critical {
+            color: #d32f2f;
+        }
+
+        /* Settings Panel */
+        .settings-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+        }
+
+        .settings-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-panel {
+            background: #ffffff;
+            padding: 30px 40px;
+            border: 3px solid #000000;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .settings-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            width: 100%;
+        }
+
+        .mode-option {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            font-size: 0.95rem;
+        }
+
+        .mode-option:first-child {
+            border-right: 1px solid #000000;
+        }
+
+        .mode-option:last-child {
+            border-left: 1px solid #000000;
+        }
+
+        .mode-option.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .mode-option:not(.active):hover {
+            background-color: #f5f5f5;
+        }
+
+        .time-input {
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 8px 12px;
+            border: 2px solid #000000;
+            width: 80px;
+            text-align: center;
+        }
+
+        .time-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .unit-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .auto-settings {
+            display: none;
+        }
+
+        .auto-settings.visible {
+            display: block;
+        }
+
+        .settings-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .settings-btn {
+            flex: 1;
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 12px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .settings-btn.primary {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .settings-btn.primary:hover {
+            background: #333333;
+        }
+
+        .settings-btn.secondary {
+            background: #ffffff;
+        }
+
+        .settings-btn.secondary:hover {
+            background: #f5f5f5;
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-top: 70px;
+        }
+
         .question-box {
             border: 3px solid #000000;
             padding: 60px 80px;
@@ -30,7 +228,7 @@
             text-align: center;
             cursor: pointer;
             user-select: none;
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.3s ease;
         }
 
         .question-box:hover {
@@ -43,22 +241,65 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .question-box.flash {
+            background-color: #e3f2fd;
+        }
+
         .question-text {
             font-size: 2rem;
             line-height: 1.5;
             color: #000000;
         }
 
+        /* Question timer display */
+        .question-timer-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .question-timer-container.visible {
+            display: block;
+        }
+
+        .question-timer {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #666;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .question-timer.warning {
+            color: #f57c00;
+        }
+
+        .question-timer.critical {
+            color: #d32f2f;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .question-timer-label {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
         .navigation {
             display: flex;
-            gap: 40px;
+            justify-content: center;
+            gap: 50px;
             margin-top: 40px;
         }
 
         .nav-button {
             font-family: Optima, 'Segoe UI', Candara, sans-serif;
-            font-size: 1.2rem;
-            padding: 12px 32px;
+            font-size: 1.4rem;
+            padding: 16px 45px;
             background: #ffffff;
             border: 2px solid #000000;
             cursor: pointer;
@@ -81,27 +322,349 @@
         .nav-button:disabled:hover {
             background-color: #ffffff;
         }
+
+        /* Session controls below navigation */
+        .session-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .session-btn {
+            font-family: inherit;
+            font-size: 1.1rem;
+            padding: 12px 30px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .session-btn.start {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .session-btn.start:hover {
+            background: #333333;
+        }
+
+        .session-btn.stop {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .session-btn.stop:hover {
+            background: #f5f5f5;
+        }
+
+        /* Session ended overlay */
+        .session-ended-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 300;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .session-ended-overlay.active {
+            display: flex;
+        }
+
+        .session-ended-panel {
+            background: #ffffff;
+            padding: 40px 50px;
+            border: 3px solid #000000;
+            text-align: center;
+        }
+
+        .session-ended-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .session-ended-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 25px;
+        }
     </style>
 </head>
 <body>
-    <div class="question-box" id="questionBox">
-        <p class="question-text" id="questionText">Loading questions...</p>
+    <!-- Header -->
+    <div class="header">
+        <span class="session-timer" id="sessionTimer">--:--</span>
+        <button class="settings-button" id="settingsButton">Settings</button>
     </div>
 
-    <div class="navigation">
-        <button class="nav-button" id="backButton" disabled>← Back</button>
-        <button class="nav-button" id="nextButton" disabled>Next →</button>
+    <!-- Settings Overlay -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-panel">
+            <h2 class="settings-title">Settings</h2>
+
+            <div class="setting-group">
+                <label class="setting-label">Mode</label>
+                <div class="mode-toggle">
+                    <div class="mode-option active" data-mode="manual">Manual</div>
+                    <div class="mode-option" data-mode="auto">Automated</div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label class="setting-label">Session Duration</label>
+                <div class="setting-row">
+                    <input type="number" class="time-input" id="sessionMinutes" value="15" min="1" max="120">
+                    <span class="unit-label">minutes</span>
+                </div>
+            </div>
+
+            <div class="setting-group auto-settings" id="autoSettings">
+                <label class="setting-label">Question Interval</label>
+                <div class="setting-row">
+                    <input type="number" class="time-input" id="questionSeconds" value="30" min="5" max="300">
+                    <span class="unit-label">seconds</span>
+                </div>
+            </div>
+
+            <div class="settings-buttons">
+                <button class="settings-btn secondary" id="closeSettings">Cancel</button>
+                <button class="settings-btn primary" id="saveSettings">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Ended Overlay -->
+    <div class="session-ended-overlay" id="sessionEndedOverlay">
+        <div class="session-ended-panel">
+            <h2 class="session-ended-title">Session Complete!</h2>
+            <p class="session-ended-message">Great work! The session has ended.</p>
+            <button class="settings-btn primary" id="dismissSessionEnded">OK</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="question-box" id="questionBox">
+            <p class="question-text" id="questionText">Loading questions...</p>
+        </div>
+
+        <div class="question-timer-container" id="questionTimerContainer">
+            <div class="question-timer" id="questionTimer">0:30</div>
+            <div class="question-timer-label">until next question</div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-button" id="backButton" disabled>← Back</button>
+            <button class="nav-button" id="nextButton" disabled>Next →</button>
+        </div>
+
+        <div class="session-controls">
+            <button class="session-btn start" id="startSessionBtn">Start Session</button>
+            <button class="session-btn stop" id="stopSessionBtn" style="display: none;">Stop Session</button>
+        </div>
     </div>
 
     <script>
+        // Questions state
         let questions = [];
         let history = [];
         let historyIndex = -1;
 
+        // Timer state
+        let mode = 'manual'; // 'manual' or 'auto'
+        let sessionDuration = 15 * 60; // in seconds
+        let questionInterval = 30; // in seconds
+        let sessionTimeRemaining = 0;
+        let questionTimeRemaining = 0;
+        let sessionTimerInterval = null;
+        let questionTimerInterval = null;
+        let isSessionRunning = false;
+
+        // Audio context for notification sound
+        let audioContext = null;
+
+        // DOM elements
         const questionBox = document.getElementById('questionBox');
         const questionText = document.getElementById('questionText');
         const backButton = document.getElementById('backButton');
         const nextButton = document.getElementById('nextButton');
+        const sessionTimerDisplay = document.getElementById('sessionTimer');
+        const questionTimerContainer = document.getElementById('questionTimerContainer');
+        const questionTimerDisplay = document.getElementById('questionTimer');
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const closeSettingsBtn = document.getElementById('closeSettings');
+        const saveSettingsBtn = document.getElementById('saveSettings');
+        const sessionMinutesInput = document.getElementById('sessionMinutes');
+        const questionSecondsInput = document.getElementById('questionSeconds');
+        const autoSettings = document.getElementById('autoSettings');
+        const modeOptions = document.querySelectorAll('.mode-option');
+        const startSessionBtn = document.getElementById('startSessionBtn');
+        const stopSessionBtn = document.getElementById('stopSessionBtn');
+        const sessionEndedOverlay = document.getElementById('sessionEndedOverlay');
+        const dismissSessionEndedBtn = document.getElementById('dismissSessionEnded');
+
+        // Initialize audio context on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play a pleasant notification sound
+        function playNotificationSound() {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Pleasant two-tone chime
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
+            oscillator.frequency.setValueAtTime(1108.73, audioContext.currentTime + 0.1); // C#6
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Format seconds to MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update session timer display
+        function updateSessionTimerDisplay() {
+            sessionTimerDisplay.textContent = formatTime(sessionTimeRemaining);
+            sessionTimerDisplay.classList.remove('running', 'warning', 'critical');
+
+            if (isSessionRunning) {
+                if (sessionTimeRemaining <= 60) {
+                    sessionTimerDisplay.classList.add('critical');
+                } else if (sessionTimeRemaining <= 180) {
+                    sessionTimerDisplay.classList.add('warning');
+                } else {
+                    sessionTimerDisplay.classList.add('running');
+                }
+            }
+        }
+
+        // Update question timer display
+        function updateQuestionTimerDisplay() {
+            questionTimerDisplay.textContent = formatTime(questionTimeRemaining);
+            questionTimerDisplay.classList.remove('warning', 'critical');
+
+            if (questionTimeRemaining <= 5) {
+                questionTimerDisplay.classList.add('critical');
+            } else if (questionTimeRemaining <= 10) {
+                questionTimerDisplay.classList.add('warning');
+            }
+        }
+
+        // Visual flash effect
+        function flashQuestionBox() {
+            questionBox.classList.add('flash');
+            setTimeout(() => {
+                questionBox.classList.remove('flash');
+            }, 300);
+        }
+
+        // Auto-advance to next question
+        function autoAdvance() {
+            flashQuestionBox();
+            playNotificationSound();
+            showRandomQuestion();
+            resetQuestionTimer();
+        }
+
+        // Start session timer
+        function startSessionTimer() {
+            sessionTimeRemaining = sessionDuration;
+            updateSessionTimerDisplay();
+
+            sessionTimerInterval = setInterval(() => {
+                sessionTimeRemaining--;
+                updateSessionTimerDisplay();
+
+                if (sessionTimeRemaining <= 0) {
+                    endSession();
+                }
+            }, 1000);
+        }
+
+        // Start question timer (auto mode only)
+        function startQuestionTimer() {
+            questionTimeRemaining = questionInterval;
+            updateQuestionTimerDisplay();
+
+            questionTimerInterval = setInterval(() => {
+                questionTimeRemaining--;
+                updateQuestionTimerDisplay();
+
+                if (questionTimeRemaining <= 0) {
+                    autoAdvance();
+                }
+            }, 1000);
+        }
+
+        // Reset question timer
+        function resetQuestionTimer() {
+            questionTimeRemaining = questionInterval;
+            updateQuestionTimerDisplay();
+        }
+
+        // Start session
+        function startSession() {
+            initAudio();
+            isSessionRunning = true;
+            startSessionBtn.style.display = 'none';
+            stopSessionBtn.style.display = 'inline-block';
+
+            startSessionTimer();
+
+            if (mode === 'auto') {
+                questionTimerContainer.classList.add('visible');
+                startQuestionTimer();
+            }
+        }
+
+        // Stop session
+        function stopSession() {
+            isSessionRunning = false;
+            startSessionBtn.style.display = 'inline-block';
+            stopSessionBtn.style.display = 'none';
+
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+            }
+
+            if (questionTimerInterval) {
+                clearInterval(questionTimerInterval);
+                questionTimerInterval = null;
+            }
+
+            sessionTimerDisplay.textContent = '--:--';
+            sessionTimerDisplay.classList.remove('running', 'warning', 'critical');
+            questionTimerContainer.classList.remove('visible');
+        }
+
+        // End session (timer ran out)
+        function endSession() {
+            stopSession();
+            sessionEndedOverlay.classList.add('active');
+            playNotificationSound();
+        }
 
         // Load questions from file
         async function loadQuestions() {
@@ -176,6 +739,11 @@
                 historyIndex--;
                 displayQuestion(history[historyIndex]);
                 updateButtons();
+
+                // Reset question timer if in auto mode
+                if (isSessionRunning && mode === 'auto') {
+                    resetQuestionTimer();
+                }
             }
         }
 
@@ -183,6 +751,39 @@
         function goNext() {
             animateClick();
             showRandomQuestion();
+
+            // Reset question timer if in auto mode
+            if (isSessionRunning && mode === 'auto') {
+                resetQuestionTimer();
+            }
+        }
+
+        // Open settings
+        function openSettings() {
+            sessionMinutesInput.value = Math.floor(sessionDuration / 60);
+            questionSecondsInput.value = questionInterval;
+            settingsOverlay.classList.add('active');
+        }
+
+        // Close settings
+        function closeSettings() {
+            settingsOverlay.classList.remove('active');
+        }
+
+        // Save settings
+        function saveSettings() {
+            sessionDuration = parseInt(sessionMinutesInput.value) * 60;
+            questionInterval = parseInt(questionSecondsInput.value);
+            closeSettings();
+        }
+
+        // Update mode selection
+        function selectMode(selectedMode) {
+            mode = selectedMode;
+            modeOptions.forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.mode === selectedMode);
+            });
+            autoSettings.classList.toggle('visible', selectedMode === 'auto');
         }
 
         // Event listeners
@@ -190,13 +791,44 @@
         backButton.addEventListener('click', goBack);
         nextButton.addEventListener('click', goNext);
 
+        settingsButton.addEventListener('click', openSettings);
+        closeSettingsBtn.addEventListener('click', closeSettings);
+        saveSettingsBtn.addEventListener('click', saveSettings);
+
+        modeOptions.forEach(option => {
+            option.addEventListener('click', () => selectMode(option.dataset.mode));
+        });
+
+        startSessionBtn.addEventListener('click', startSession);
+        stopSessionBtn.addEventListener('click', stopSession);
+        dismissSessionEndedBtn.addEventListener('click', () => {
+            sessionEndedOverlay.classList.remove('active');
+        });
+
+        // Close settings on overlay click (outside panel)
+        settingsOverlay.addEventListener('click', (e) => {
+            if (e.target === settingsOverlay) {
+                closeSettings();
+            }
+        });
+
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
+            // Don't handle if in settings or input focused
+            if (settingsOverlay.classList.contains('active') ||
+                document.activeElement.tagName === 'INPUT') {
+                return;
+            }
+
             if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
                 if (!backButton.disabled) goBack();
             } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();
                 goNext();
+            } else if (e.key === 'Escape') {
+                if (sessionEndedOverlay.classList.contains('active')) {
+                    sessionEndedOverlay.classList.remove('active');
+                }
             }
         });
 
