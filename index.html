@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English Talk Cards</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -31,15 +35,120 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 15px 25px;
+            padding: 20px 25px;
+            min-height: 70px;
+            box-sizing: border-box;
             background: #ffffff;
             border-bottom: 2px solid #000000;
             z-index: 100;
         }
 
-        .settings-button {
+        .header-left {
+            position: absolute;
+            left: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
             position: absolute;
             right: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auth-button {
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .auth-button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .user-info {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+
+        .user-avatar:hover {
+            opacity: 0.8;
+        }
+
+        .user-name {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Profile dropdown */
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            min-width: 180px;
+            display: none;
+            z-index: 200;
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .profile-dropdown-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .profile-dropdown-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .profile-dropdown-email {
+            font-size: 0.8rem;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .profile-dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            font-size: 0.9rem;
+        }
+
+        .profile-dropdown-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .settings-button {
             font-family: inherit;
             font-size: 1.1rem;
             padding: 10px 20px;
@@ -87,26 +196,119 @@
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 200;
+            overflow-y: auto;
         }
 
         .settings-overlay.active {
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
+            padding: 40px 20px;
         }
 
         .settings-panel {
             background: #ffffff;
-            padding: 30px 40px;
+            padding: 0;
             border: 3px solid #000000;
-            max-width: 400px;
-            width: 90%;
+            max-width: 600px;
+            width: 100%;
+            margin: auto;
+        }
+
+        .settings-header {
+            padding: 20px 30px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .settings-title {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .settings-close-btn {
             font-size: 1.5rem;
-            margin-bottom: 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            line-height: 1;
+        }
+
+        .settings-close-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .settings-tabs {
+            display: flex;
+            border-bottom: 2px solid #000;
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 14px 20px;
             text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: none;
+            border-right: 1px solid #ddd;
+            transition: all 0.15s ease;
+        }
+
+        .settings-tab:last-child {
+            border-right: none;
+        }
+
+        .settings-tab:hover {
+            background: #eee;
+        }
+
+        .settings-tab.active {
+            background: #fff;
+            border-bottom: 2px solid #fff;
+            margin-bottom: -2px;
+        }
+
+        .settings-tab-content {
+            display: none;
+            padding: 25px 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .settings-tab-content.active {
+            display: block;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .section-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .settings-footer {
+            padding: 15px 30px;
+            border-top: 1px solid #e0e0e0;
+            background: #f9f9f9;
         }
 
         .setting-group {
@@ -183,6 +385,500 @@
 
         .auto-settings.visible {
             display: block;
+        }
+
+        /* Projects Section */
+        .projects-section {
+            display: none;
+        }
+
+        .projects-section.visible {
+            display: block;
+        }
+
+        .project-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .project-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 10px;
+        }
+
+        .project-item:last-child {
+            border-bottom: none;
+        }
+
+        .project-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .project-name {
+            flex: 1;
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .project-action-btn {
+            font-family: inherit;
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            background: #fff;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .project-action-btn:hover {
+            border-color: #000;
+        }
+
+        .project-action-btn.delete {
+            color: #d32f2f;
+            border-color: #d32f2f;
+        }
+
+        .project-action-btn.delete:hover {
+            background: #d32f2f;
+            color: #fff;
+        }
+
+        .add-project-form {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+        }
+
+        .add-project-form.visible {
+            display: block;
+        }
+
+        .add-project-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .project-name-input {
+            flex: 1;
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+            border: 2px solid #000;
+        }
+
+        .project-name-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.15);
+        }
+
+        .color-option.selected {
+            border-color: #000;
+        }
+
+        .project-form-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .project-form-btn {
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border: 1px solid #000;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .project-form-btn.save {
+            background: #000;
+            color: #fff;
+        }
+
+        .project-form-btn.save:hover {
+            background: #333;
+        }
+
+        .project-form-btn.cancel {
+            background: #fff;
+        }
+
+        .project-form-btn.cancel:hover {
+            background: #f5f5f5;
+        }
+
+        .new-project-btn {
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            background: #fff;
+            border: 1px dashed #999;
+            cursor: pointer;
+            width: 100%;
+            color: #666;
+            transition: all 0.15s ease;
+        }
+
+        .new-project-btn:hover {
+            border-color: #000;
+            color: #000;
+        }
+
+        .no-projects-msg {
+            padding: 15px;
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        /* Project selector dropdown */
+        .project-selector {
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+            border: 2px solid #000;
+            background: #fff;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .project-selector:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Question Sources in Settings */
+        .question-sources {
+            margin-top: 15px;
+        }
+
+        .source-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .source-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .source-checkbox .project-color-dot {
+            width: 10px;
+            height: 10px;
+        }
+
+        /* My Questions Section */
+        .my-questions-section {
+            display: none;
+        }
+
+        .my-questions-section.visible {
+            display: block;
+        }
+
+        .add-question-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .question-input {
+            flex: 1;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 10px 12px;
+            border: 2px solid #000000;
+            resize: none;
+        }
+
+        .question-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-question-btn {
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px 16px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .add-question-btn:hover {
+            background: #333333;
+        }
+
+        .add-question-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .my-questions-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+
+        .my-question-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 10px;
+        }
+
+        .my-question-item:last-child {
+            border-bottom: none;
+        }
+
+        .my-question-text {
+            flex: 1;
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .delete-question-btn {
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            background: #ffffff;
+            color: #d32f2f;
+            border: 1px solid #d32f2f;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .delete-question-btn:hover {
+            background: #d32f2f;
+            color: #ffffff;
+        }
+
+        .no-questions-msg {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .sign-in-prompt {
+            text-align: center;
+            padding: 15px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .question-count {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        /* Bulk Import */
+        .import-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .import-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .import-toggle:hover {
+            color: #000;
+        }
+
+        .import-toggle-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .import-toggle-icon.open {
+            transform: rotate(90deg);
+        }
+
+        .import-content {
+            display: none;
+        }
+
+        .import-content.visible {
+            display: block;
+        }
+
+        .import-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 15px;
+        }
+
+        .import-tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            border: 1px solid #000;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.15s ease;
+        }
+
+        .import-tab:first-child {
+            border-right: none;
+        }
+
+        .import-tab.active {
+            background: #000;
+            color: #fff;
+        }
+
+        .import-tab:not(.active):hover {
+            background: #f5f5f5;
+        }
+
+        .import-paste-area {
+            width: 100%;
+            min-height: 100px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px;
+            border: 2px solid #000;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+
+        .import-paste-area:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .import-hint {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .import-file-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-bottom: 10px;
+        }
+
+        .import-file-area:hover {
+            border-color: #000;
+            background: #f9f9f9;
+        }
+
+        .import-file-area.dragover {
+            border-color: #000;
+            background: #f0f0f0;
+        }
+
+        .import-file-input {
+            display: none;
+        }
+
+        .import-file-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .import-btn {
+            width: 100%;
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px;
+            background: #000;
+            color: #fff;
+            border: 2px solid #000;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .import-btn:hover {
+            background: #333;
+        }
+
+        .import-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .import-status {
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .import-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .import-status.error {
+            background: #ffebee;
+            color: #c62828;
         }
 
         .settings-buttons {
@@ -403,47 +1099,470 @@
             color: #666;
             margin-bottom: 25px;
         }
+
+        /* Question Dashboard */
+        .dashboard-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 250;
+            overflow-y: auto;
+        }
+
+        .dashboard-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+        }
+
+        .dashboard-panel {
+            background: #ffffff;
+            border: 3px solid #000000;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            padding: 20px 25px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .dashboard-close {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            line-height: 1;
+        }
+
+        .dashboard-close:hover {
+            background: #f5f5f5;
+        }
+
+        .dashboard-toolbar {
+            padding: 15px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-toolbar-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .dashboard-select-all {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .dashboard-select-all input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .dashboard-bulk-actions {
+            display: none;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .dashboard-bulk-actions.visible {
+            display: flex;
+        }
+
+        .dashboard-selected-count {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .bulk-delete-btn {
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            background: #d32f2f;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .bulk-delete-btn:hover {
+            background: #b71c1c;
+        }
+
+        .dashboard-search {
+            flex: 1;
+            min-width: 150px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 10px 15px;
+            border: 2px solid #000;
+        }
+
+        .dashboard-search:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-filter {
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px 15px;
+            border: 2px solid #000;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .dashboard-filter:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-stats {
+            font-size: 0.9rem;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .dashboard-list {
+            list-style: none;
+        }
+
+        .dashboard-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 15px;
+        }
+
+        .dashboard-item-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .dashboard-item:hover {
+            background: #f9f9f9;
+        }
+
+        .dashboard-item-text {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .dashboard-item-text.editing {
+            display: none;
+        }
+
+        .dashboard-item-input {
+            flex: 1;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 8px 10px;
+            border: 2px solid #000;
+            display: none;
+        }
+
+        .dashboard-item-input.editing {
+            display: block;
+        }
+
+        .dashboard-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dashboard-btn {
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border: 1px solid #000;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: #fff;
+        }
+
+        .dashboard-btn:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        .dashboard-btn.delete {
+            border-color: #d32f2f;
+            color: #d32f2f;
+        }
+
+        .dashboard-btn.delete:hover {
+            background: #d32f2f;
+            color: #fff;
+        }
+
+        .dashboard-btn.save {
+            background: #000;
+            color: #fff;
+        }
+
+        .dashboard-btn.save:hover {
+            background: #333;
+        }
+
+        .dashboard-empty {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+        }
+
+        .dashboard-footer {
+            padding: 15px 25px;
+            border-top: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .manage-btn {
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            background: #fff;
+            border: 2px solid #000;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .manage-btn:hover {
+            background: #000;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
+        <div class="header-left">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <img class="user-avatar" id="userAvatar" src="" alt="User" title="Account menu">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-name" id="profileDropdownName"></div>
+                        <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
+                    </div>
+                    <div class="profile-dropdown-item" id="signOutBtn">Sign Out</div>
+                </div>
+            </div>
+            <button class="auth-button" id="signInBtn">Sign In</button>
+        </div>
         <span class="session-timer" id="sessionTimer">--:--</span>
-        <button class="settings-button" id="settingsButton">Settings</button>
+        <div class="header-right">
+            <button class="settings-button" id="settingsButton">Settings</button>
+        </div>
     </div>
 
     <!-- Settings Overlay -->
     <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-panel">
-            <h2 class="settings-title">Settings</h2>
+            <div class="settings-header">
+                <h2 class="settings-title">Settings</h2>
+                <button class="settings-close-btn" id="closeSettings">&times;</button>
+            </div>
 
-            <div class="setting-group">
-                <label class="setting-label">Mode</label>
-                <div class="mode-toggle">
-                    <div class="mode-option active" data-mode="manual">Manual</div>
-                    <div class="mode-option" data-mode="auto">Automated</div>
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="session">Session</button>
+                <button class="settings-tab" data-tab="projects">Projects</button>
+                <button class="settings-tab" data-tab="questions">Questions</button>
+            </div>
+
+            <!-- Session Tab -->
+            <div class="settings-tab-content active" id="tabSession">
+                <div class="settings-section">
+                    <div class="section-title">Mode</div>
+                    <div class="mode-toggle">
+                        <div class="mode-option active" data-mode="manual">Manual</div>
+                        <div class="mode-option" data-mode="auto">Automated</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-title">Session Duration</div>
+                    <div class="setting-row">
+                        <input type="number" class="time-input" id="sessionMinutes" value="15" min="1" max="120">
+                        <span class="unit-label">minutes</span>
+                    </div>
+                </div>
+
+                <div class="settings-section auto-settings" id="autoSettings">
+                    <div class="section-title">Question Interval</div>
+                    <div class="setting-row">
+                        <input type="number" class="time-input" id="questionSeconds" value="30" min="5" max="300">
+                        <span class="unit-label">seconds</span>
+                    </div>
+                </div>
+
+                <div class="settings-section auto-settings" id="autoSettings2">
+                    <div class="section-title">Auto-cycle Source</div>
+                    <select class="project-selector" id="autoProjectSelect" style="width: 100%;">
+                        <option value="all">All enabled sources</option>
+                    </select>
+                    <p class="section-description" style="margin-top: 10px; margin-bottom: 0;">Choose a specific project to cycle through, or use all enabled question sources.</p>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-title">Question Sources</div>
+                    <p class="section-description">Select which question sources to include in your session.</p>
+                    <label class="source-checkbox">
+                        <input type="checkbox" id="sourceDefault" checked>
+                        <span>Default Questions</span>
+                    </label>
+                    <label class="source-checkbox">
+                        <input type="checkbox" id="sourceUncategorized" checked>
+                        <span>Uncategorized</span>
+                    </label>
+                    <div id="projectSourcesList"></div>
                 </div>
             </div>
 
-            <div class="setting-group">
-                <label class="setting-label">Session Duration</label>
-                <div class="setting-row">
-                    <input type="number" class="time-input" id="sessionMinutes" value="15" min="1" max="120">
-                    <span class="unit-label">minutes</span>
+            <!-- Projects Tab -->
+            <div class="settings-tab-content" id="tabProjects">
+                <div id="projectsSignInPrompt" class="sign-in-prompt">
+                    Sign in with Google to create and manage projects
+                </div>
+
+                <div id="projectsSection" class="projects-section">
+                    <div class="settings-section">
+                        <div class="section-title">My Projects</div>
+                        <p class="section-description">Organize your questions into projects for better management.</p>
+                        <div class="project-list" id="projectList">
+                            <div class="no-projects-msg">No projects yet</div>
+                        </div>
+                        <button class="new-project-btn" id="newProjectBtn">+ New Project</button>
+
+                        <div class="add-project-form" id="addProjectForm">
+                            <div class="add-project-row">
+                                <input type="text" class="project-name-input" id="projectNameInput" placeholder="Project name...">
+                            </div>
+                            <label class="setting-label" style="margin: 10px 0 8px;">Color</label>
+                            <div class="color-picker" id="colorPicker">
+                                <div class="color-option selected" data-color="#ef5350" style="background: #ef5350;"></div>
+                                <div class="color-option" data-color="#ff9800" style="background: #ff9800;"></div>
+                                <div class="color-option" data-color="#ffeb3b" style="background: #ffeb3b;"></div>
+                                <div class="color-option" data-color="#4caf50" style="background: #4caf50;"></div>
+                                <div class="color-option" data-color="#2196f3" style="background: #2196f3;"></div>
+                                <div class="color-option" data-color="#9c27b0" style="background: #9c27b0;"></div>
+                                <div class="color-option" data-color="#e91e63" style="background: #e91e63;"></div>
+                                <div class="color-option" data-color="#9e9e9e" style="background: #9e9e9e;"></div>
+                            </div>
+                            <div class="project-form-buttons">
+                                <button class="project-form-btn save" id="saveProjectBtn">Save</button>
+                                <button class="project-form-btn cancel" id="cancelProjectBtn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="setting-group auto-settings" id="autoSettings">
-                <label class="setting-label">Question Interval</label>
-                <div class="setting-row">
-                    <input type="number" class="time-input" id="questionSeconds" value="30" min="5" max="300">
-                    <span class="unit-label">seconds</span>
+            <!-- Questions Tab -->
+            <div class="settings-tab-content" id="tabQuestions">
+                <div id="signInPrompt" class="sign-in-prompt">
+                    Sign in with Google to add your own questions
                 </div>
-            </div>
 
-            <div class="settings-buttons">
-                <button class="settings-btn secondary" id="closeSettings">Cancel</button>
-                <button class="settings-btn primary" id="saveSettings">Save</button>
+                <div id="myQuestionsSection" class="my-questions-section">
+                    <div class="settings-section">
+                        <div class="section-title">Add Question</div>
+                        <div class="add-question-form" style="flex-direction: column; gap: 10px;">
+                            <div class="setting-row" style="width: 100%;">
+                                <select class="project-selector" id="questionProjectSelect" style="flex: 1;">
+                                    <option value="">Uncategorized</option>
+                                </select>
+                            </div>
+                            <div class="setting-row" style="width: 100%;">
+                                <input type="text" class="question-input" id="newQuestionInput" placeholder="Enter a new question..." style="flex: 1;">
+                                <button class="add-question-btn" id="addQuestionBtn">Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Recent Questions</div>
+                        <div class="my-questions-list" id="myQuestionsList">
+                            <div class="no-questions-msg">No custom questions yet</div>
+                        </div>
+                        <div class="question-count" id="questionCount"></div>
+                        <button class="manage-btn" id="openDashboardBtn">Manage All Questions</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Bulk Import</div>
+                        <p class="section-description">Import multiple questions at once from text or a file.</p>
+
+                        <div class="setting-group" style="margin-bottom: 15px;">
+                            <label class="setting-label">Import to Project</label>
+                            <select class="project-selector" id="importProjectSelect" style="width: 100%;">
+                                <option value="">Uncategorized</option>
+                            </select>
+                        </div>
+
+                        <div class="import-tabs">
+                            <div class="import-tab active" data-tab="paste">Paste Text</div>
+                            <div class="import-tab" data-tab="file">Upload File</div>
+                        </div>
+
+                        <div id="pasteTab">
+                            <textarea class="import-paste-area" id="importPasteArea" placeholder="Paste your questions here (one per line)..."></textarea>
+                            <div class="import-hint">One question per line</div>
+                            <button class="import-btn" id="importPasteBtn">Import Questions</button>
+                        </div>
+
+                        <div id="fileTab" style="display: none;">
+                            <div class="import-file-area" id="importFileArea">
+                                <input type="file" class="import-file-input" id="importFileInput" accept=".txt">
+                                <div class="import-file-label">Click or drag a .txt file here</div>
+                            </div>
+                            <div class="import-hint">Text file with one question per line</div>
+                            <button class="import-btn" id="importFileBtn" disabled>Import Questions</button>
+                        </div>
+
+                        <div class="import-status" id="importStatus" style="display: none;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -454,6 +1573,54 @@
             <h2 class="session-ended-title">Session Complete!</h2>
             <p class="session-ended-message">Great work! The session has ended.</p>
             <button class="settings-btn primary" id="dismissSessionEnded">OK</button>
+        </div>
+    </div>
+
+    <!-- Question Dashboard -->
+    <div class="dashboard-overlay" id="dashboardOverlay">
+        <div class="dashboard-panel">
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">My Questions</h2>
+                <button class="dashboard-close" id="closeDashboard">&times;</button>
+            </div>
+            <div class="dashboard-toolbar">
+                <div class="dashboard-toolbar-row">
+                    <input type="text" class="dashboard-search" id="dashboardSearch" placeholder="Search questions...">
+                    <select class="dashboard-filter" id="dashboardFilter">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                    <select class="dashboard-filter" id="dashboardProjectFilter">
+                        <option value="all">All Projects</option>
+                        <option value="uncategorized">Uncategorized</option>
+                    </select>
+                    <div class="dashboard-stats" id="dashboardStats">0 questions</div>
+                </div>
+                <div class="dashboard-toolbar-row">
+                    <label class="dashboard-select-all">
+                        <input type="checkbox" id="selectAllCheckbox">
+                        <span>Select All</span>
+                    </label>
+                    <div class="dashboard-bulk-actions" id="bulkActions">
+                        <span class="dashboard-selected-count" id="selectedCount">0 selected</span>
+                        <select class="dashboard-filter" id="moveToProjectSelect" style="margin-left: 10px;">
+                            <option value="">Move to...</option>
+                            <option value="uncategorized">Uncategorized</option>
+                        </select>
+                        <button class="bulk-delete-btn" id="bulkDeleteBtn">Delete Selected</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-content">
+                <ul class="dashboard-list" id="dashboardList">
+                    <li class="dashboard-empty">No questions yet</li>
+                </ul>
+            </div>
+            <div class="dashboard-footer">
+                <button class="settings-btn secondary" id="closeDashboardBtn">Close</button>
+            </div>
         </div>
     </div>
 
@@ -480,15 +1647,44 @@
     </div>
 
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkDmVuvo1WSvsnKVxgG63TsuDSd6OUmcE",
+            authDomain: "english-talk-cards.firebaseapp.com",
+            projectId: "english-talk-cards",
+            storageBucket: "english-talk-cards.firebasestorage.app",
+            messagingSenderId: "650581214499",
+            appId: "1:650581214499:web:b1a48acdb2ee2340723896"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         // Questions state
+        let defaultQuestions = [];
+        let userQuestions = [];
+        let userProjects = [];
         let questions = [];
         let history = [];
         let historyIndex = -1;
+        let currentUser = null;
+
+        // Question sources (for filtering during sessions)
+        let enabledSources = {
+            default: true,
+            uncategorized: true,
+            projects: {} // projectId -> boolean
+        };
+
+        // Auto-cycle project selection (for automated mode)
+        let autoProjectSelection = 'all';
 
         // Timer state
-        let mode = 'manual'; // 'manual' or 'auto'
-        let sessionDuration = 15 * 60; // in seconds
-        let questionInterval = 30; // in seconds
+        let mode = 'manual';
+        let sessionDuration = 15 * 60;
+        let questionInterval = 30;
         let sessionTimeRemaining = 0;
         let questionTimeRemaining = 0;
         let sessionTimerInterval = null;
@@ -509,7 +1705,6 @@
         const settingsButton = document.getElementById('settingsButton');
         const settingsOverlay = document.getElementById('settingsOverlay');
         const closeSettingsBtn = document.getElementById('closeSettings');
-        const saveSettingsBtn = document.getElementById('saveSettings');
         const sessionMinutesInput = document.getElementById('sessionMinutes');
         const questionSecondsInput = document.getElementById('questionSeconds');
         const autoSettings = document.getElementById('autoSettings');
@@ -519,14 +1714,1060 @@
         const sessionEndedOverlay = document.getElementById('sessionEndedOverlay');
         const dismissSessionEndedBtn = document.getElementById('dismissSessionEnded');
 
-        // Initialize audio context on first user interaction
+        // Auth DOM elements
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileDropdownName = document.getElementById('profileDropdownName');
+        const profileDropdownEmail = document.getElementById('profileDropdownEmail');
+        const signInPrompt = document.getElementById('signInPrompt');
+        const myQuestionsSection = document.getElementById('myQuestionsSection');
+        const newQuestionInput = document.getElementById('newQuestionInput');
+        const addQuestionBtn = document.getElementById('addQuestionBtn');
+        const myQuestionsList = document.getElementById('myQuestionsList');
+        const questionCount = document.getElementById('questionCount');
+
+        // Import DOM elements
+        const importTabs = document.querySelectorAll('.import-tab');
+        const pasteTab = document.getElementById('pasteTab');
+        const fileTab = document.getElementById('fileTab');
+        const importPasteArea = document.getElementById('importPasteArea');
+        const importPasteBtn = document.getElementById('importPasteBtn');
+        const importFileArea = document.getElementById('importFileArea');
+        const importFileInput = document.getElementById('importFileInput');
+        const importFileBtn = document.getElementById('importFileBtn');
+        const importStatus = document.getElementById('importStatus');
+
+        // Dashboard DOM elements
+        const dashboardOverlay = document.getElementById('dashboardOverlay');
+        const dashboardSearch = document.getElementById('dashboardSearch');
+        const dashboardFilter = document.getElementById('dashboardFilter');
+        const dashboardStats = document.getElementById('dashboardStats');
+        const dashboardList = document.getElementById('dashboardList');
+        const closeDashboardBtn = document.getElementById('closeDashboard');
+        const closeDashboardBtn2 = document.getElementById('closeDashboardBtn');
+        const openDashboardBtn = document.getElementById('openDashboardBtn');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const bulkActions = document.getElementById('bulkActions');
+        const selectedCountDisplay = document.getElementById('selectedCount');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const dashboardProjectFilter = document.getElementById('dashboardProjectFilter');
+        const moveToProjectSelect = document.getElementById('moveToProjectSelect');
+
+        // Projects DOM elements
+        const projectsSignInPrompt = document.getElementById('projectsSignInPrompt');
+        const projectsSection = document.getElementById('projectsSection');
+        const projectList = document.getElementById('projectList');
+        const newProjectBtn = document.getElementById('newProjectBtn');
+        const addProjectForm = document.getElementById('addProjectForm');
+        const projectNameInput = document.getElementById('projectNameInput');
+        const colorPicker = document.getElementById('colorPicker');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        const cancelProjectBtn = document.getElementById('cancelProjectBtn');
+        const questionProjectSelect = document.getElementById('questionProjectSelect');
+        const importProjectSelect = document.getElementById('importProjectSelect');
+        const sourceDefault = document.getElementById('sourceDefault');
+        const sourceUncategorized = document.getElementById('sourceUncategorized');
+        const projectSourcesList = document.getElementById('projectSourcesList');
+        const autoProjectSelect = document.getElementById('autoProjectSelect');
+
+        // ============ FIREBASE AUTH ============
+
+        // Sign in with Google
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                console.error('Sign in error:', error);
+                alert('Could not sign in. Please try again.');
+            }
+        }
+
+        // Sign out
+        async function signOut() {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error('Sign out error:', error);
+            }
+        }
+
+        // Handle auth state changes
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+
+            if (user) {
+                // User is signed in
+                signInBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userAvatar.src = user.photoURL || '';
+                profileDropdownName.textContent = user.displayName || 'User';
+                profileDropdownEmail.textContent = user.email || '';
+
+                signInPrompt.style.display = 'none';
+                myQuestionsSection.classList.add('visible');
+                projectsSignInPrompt.style.display = 'none';
+                projectsSection.classList.add('visible');
+
+                // Load user's projects and questions
+                await loadUserProjects();
+                await loadUserQuestions();
+            } else {
+                // User is signed out
+                signInBtn.style.display = 'inline-block';
+                userInfo.style.display = 'none';
+                profileDropdown.classList.remove('active');
+
+                signInPrompt.style.display = 'block';
+                myQuestionsSection.classList.remove('visible');
+                projectsSignInPrompt.style.display = 'block';
+                projectsSection.classList.remove('visible');
+
+                // Clear user questions and projects
+                userQuestions = [];
+                userProjects = [];
+                enabledSources.projects = {};
+                updateQuestionsList();
+                updateProjectSelectors();
+                mergeQuestions();
+            }
+        });
+
+        // ============ FIRESTORE ============
+
+        // Load user's questions from Firestore
+        async function loadUserQuestions() {
+            if (!currentUser) return;
+
+            try {
+                const snapshot = await db.collection('questions')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                userQuestions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    text: doc.data().text,
+                    projectId: doc.data().projectId || null,
+                    createdAt: doc.data().createdAt
+                }));
+
+                // Sort client-side (newest first)
+                userQuestions.sort((a, b) => {
+                    if (!a.createdAt) return 1;
+                    if (!b.createdAt) return -1;
+                    return b.createdAt.toMillis() - a.createdAt.toMillis();
+                });
+
+                renderMyQuestionsList();
+                mergeQuestions();
+                updateQuestionCount();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        // Add a new question to Firestore
+        async function addQuestion(text) {
+            if (!currentUser || !text.trim()) return;
+
+            const projectId = questionProjectSelect.value || null;
+
+            try {
+                addQuestionBtn.disabled = true;
+
+                const docRef = await db.collection('questions').add({
+                    userId: currentUser.uid,
+                    text: text.trim(),
+                    projectId: projectId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                userQuestions.unshift({
+                    id: docRef.id,
+                    text: text.trim(),
+                    projectId: projectId,
+                    createdAt: { toDate: () => new Date() } // Local timestamp for filtering
+                });
+
+                newQuestionInput.value = '';
+                renderMyQuestionsList();
+                mergeQuestions();
+                updateQuestionCount();
+            } catch (error) {
+                console.error('Error adding question:', error);
+                alert('Could not add question. Please try again.');
+            } finally {
+                addQuestionBtn.disabled = false;
+            }
+        }
+
+        // Delete a question from Firestore
+        async function deleteQuestion(questionId) {
+            if (!currentUser) return;
+
+            try {
+                await db.collection('questions').doc(questionId).delete();
+
+                userQuestions = userQuestions.filter(q => q.id !== questionId);
+                renderMyQuestionsList();
+                mergeQuestions();
+                updateQuestionCount();
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                alert('Could not delete question. Please try again.');
+            }
+        }
+
+        // ============ PROJECTS ============
+
+        let editingProjectId = null;
+        let selectedProjectColor = '#ef5350';
+
+        // Load user's projects from Firestore
+        async function loadUserProjects() {
+            if (!currentUser) return;
+
+            try {
+                const snapshot = await db.collection('projects')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                userProjects = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    name: doc.data().name,
+                    color: doc.data().color,
+                    createdAt: doc.data().createdAt
+                }));
+
+                // Sort by name
+                userProjects.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Initialize enabled sources for projects
+                userProjects.forEach(p => {
+                    if (!(p.id in enabledSources.projects)) {
+                        enabledSources.projects[p.id] = true;
+                    }
+                });
+
+                renderProjectList();
+                updateProjectSelectors();
+                renderProjectSources();
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        // Create a new project
+        async function createProject(name, color) {
+            if (!currentUser || !name.trim()) return;
+
+            try {
+                saveProjectBtn.disabled = true;
+
+                const docRef = await db.collection('projects').add({
+                    userId: currentUser.uid,
+                    name: name.trim(),
+                    color: color,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                userProjects.push({
+                    id: docRef.id,
+                    name: name.trim(),
+                    color: color
+                });
+
+                userProjects.sort((a, b) => a.name.localeCompare(b.name));
+                enabledSources.projects[docRef.id] = true;
+
+                hideProjectForm();
+                renderProjectList();
+                updateProjectSelectors();
+                renderProjectSources();
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Could not create project. Please try again.');
+            } finally {
+                saveProjectBtn.disabled = false;
+            }
+        }
+
+        // Update a project
+        async function updateProject(projectId, name, color) {
+            if (!currentUser || !name.trim()) return;
+
+            try {
+                await db.collection('projects').doc(projectId).update({
+                    name: name.trim(),
+                    color: color
+                });
+
+                const project = userProjects.find(p => p.id === projectId);
+                if (project) {
+                    project.name = name.trim();
+                    project.color = color;
+                }
+
+                userProjects.sort((a, b) => a.name.localeCompare(b.name));
+
+                hideProjectForm();
+                renderProjectList();
+                updateProjectSelectors();
+                renderProjectSources();
+            } catch (error) {
+                console.error('Error updating project:', error);
+                alert('Could not update project. Please try again.');
+            }
+        }
+
+        // Delete a project
+        async function deleteProject(projectId) {
+            if (!currentUser) return;
+
+            if (!confirm('Delete this project? Questions in this project will become uncategorized.')) {
+                return;
+            }
+
+            try {
+                await db.collection('projects').doc(projectId).delete();
+
+                // Update questions to remove projectId (they become uncategorized)
+                userQuestions.forEach(q => {
+                    if (q.projectId === projectId) {
+                        q.projectId = null;
+                    }
+                });
+
+                userProjects = userProjects.filter(p => p.id !== projectId);
+                delete enabledSources.projects[projectId];
+
+                renderProjectList();
+                updateProjectSelectors();
+                renderProjectSources();
+                renderMyQuestionsList();
+                mergeQuestions();
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('Could not delete project. Please try again.');
+            }
+        }
+
+        // Show project form for creating/editing
+        function showProjectForm(projectId = null) {
+            editingProjectId = projectId;
+
+            if (projectId) {
+                const project = userProjects.find(p => p.id === projectId);
+                if (project) {
+                    projectNameInput.value = project.name;
+                    selectedProjectColor = project.color;
+                }
+            } else {
+                projectNameInput.value = '';
+                selectedProjectColor = '#ef5350';
+            }
+
+            // Update color picker selection
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.color === selectedProjectColor);
+            });
+
+            addProjectForm.classList.add('visible');
+            newProjectBtn.style.display = 'none';
+            projectNameInput.focus();
+        }
+
+        // Hide project form
+        function hideProjectForm() {
+            addProjectForm.classList.remove('visible');
+            newProjectBtn.style.display = 'block';
+            editingProjectId = null;
+            projectNameInput.value = '';
+        }
+
+        // Render project list
+        function renderProjectList() {
+            if (userProjects.length === 0) {
+                projectList.innerHTML = '<div class="no-projects-msg">No projects yet</div>';
+                return;
+            }
+
+            projectList.innerHTML = userProjects.map(p => `
+                <div class="project-item" data-id="${p.id}">
+                    <span class="project-color-dot" style="background: ${p.color};"></span>
+                    <span class="project-name">${escapeHtml(p.name)}</span>
+                    <div class="project-actions">
+                        <button class="project-action-btn" onclick="showProjectForm('${p.id}')">Edit</button>
+                        <button class="project-action-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update project selector dropdowns
+        function updateProjectSelectors() {
+            const options = '<option value="">Uncategorized</option>' +
+                userProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+            questionProjectSelect.innerHTML = options;
+            importProjectSelect.innerHTML = options;
+
+            // Update auto-cycle project selector
+            autoProjectSelect.innerHTML = '<option value="all">All enabled sources</option>' +
+                '<option value="default">Default Questions only</option>' +
+                '<option value="uncategorized">Uncategorized only</option>' +
+                userProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)} only</option>`).join('');
+        }
+
+        // Render project sources checkboxes
+        function renderProjectSources() {
+            projectSourcesList.innerHTML = userProjects.map(p => `
+                <label class="source-checkbox">
+                    <input type="checkbox" data-project-id="${p.id}" ${enabledSources.projects[p.id] ? 'checked' : ''}>
+                    <span class="project-color-dot" style="background: ${p.color};"></span>
+                    <span>${escapeHtml(p.name)}</span>
+                </label>
+            `).join('');
+
+            // Add event listeners to project checkboxes
+            projectSourcesList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const projectId = e.target.dataset.projectId;
+                    enabledSources.projects[projectId] = e.target.checked;
+                    mergeQuestions();
+                });
+            });
+        }
+
+        // Get project by ID
+        function getProjectById(projectId) {
+            return userProjects.find(p => p.id === projectId);
+        }
+
+        // ============ BULK IMPORT ============
+
+        let selectedFile = null;
+
+        // Toggle import section visibility
+        // Switch between paste and file tabs
+        function switchImportTab(tab) {
+            importTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            pasteTab.style.display = tab === 'paste' ? 'block' : 'none';
+            fileTab.style.display = tab === 'file' ? 'block' : 'none';
+            hideImportStatus();
+        }
+
+        // Show import status message
+        function showImportStatus(message, isError = false) {
+            importStatus.textContent = message;
+            importStatus.className = 'import-status ' + (isError ? 'error' : 'success');
+            importStatus.style.display = 'block';
+        }
+
+        // Hide import status
+        function hideImportStatus() {
+            importStatus.style.display = 'none';
+        }
+
+        // Parse questions from text (one per line)
+        function parseQuestions(text) {
+            return text.split('\n')
+                .map(q => q.trim())
+                .filter(q => q.length > 0);
+        }
+
+        // Import multiple questions to Firestore
+        async function importQuestions(questionsArray, projectId = null) {
+            if (!currentUser || questionsArray.length === 0) return 0;
+
+            const batch = db.batch();
+            const questionsRef = db.collection('questions');
+            let count = 0;
+
+            for (const text of questionsArray) {
+                const docRef = questionsRef.doc();
+                batch.set(docRef, {
+                    userId: currentUser.uid,
+                    text: text,
+                    projectId: projectId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            }
+
+            await batch.commit();
+            return count;
+        }
+
+        // Handle paste import
+        async function handlePasteImport() {
+            const text = importPasteArea.value;
+            const questionsToImport = parseQuestions(text);
+            const projectId = importProjectSelect.value || null;
+
+            if (questionsToImport.length === 0) {
+                showImportStatus('No questions found. Make sure each question is on its own line.', true);
+                return;
+            }
+
+            try {
+                importPasteBtn.disabled = true;
+                importPasteBtn.textContent = 'Importing...';
+
+                const count = await importQuestions(questionsToImport, projectId);
+
+                // Reload user questions
+                await loadUserQuestions();
+
+                importPasteArea.value = '';
+                showImportStatus(`Successfully imported ${count} question${count !== 1 ? 's' : ''}!`);
+            } catch (error) {
+                console.error('Import error:', error);
+                showImportStatus('Failed to import questions. Please try again.', true);
+            } finally {
+                importPasteBtn.disabled = false;
+                importPasteBtn.textContent = 'Import Questions';
+            }
+        }
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!file) return;
+
+            if (!file.name.endsWith('.txt')) {
+                showImportStatus('Please select a .txt file', true);
+                return;
+            }
+
+            selectedFile = file;
+            importFileBtn.disabled = false;
+            document.querySelector('.import-file-label').textContent = file.name;
+        }
+
+        // Handle file import
+        async function handleFileImport() {
+            if (!selectedFile) return;
+
+            const projectId = importProjectSelect.value || null;
+
+            try {
+                importFileBtn.disabled = true;
+                importFileBtn.textContent = 'Importing...';
+
+                const text = await selectedFile.text();
+                const allLines = text.split('\n');
+                const totalLines = allLines.length;
+                const questionsToImport = parseQuestions(text);
+                const skippedLines = totalLines - questionsToImport.length;
+
+                if (questionsToImport.length === 0) {
+                    showImportStatus(`No valid questions found. File had ${totalLines} line${totalLines !== 1 ? 's' : ''}, but all were empty. Each question must be on its own line.`, true);
+                    return;
+                }
+
+                const count = await importQuestions(questionsToImport, projectId);
+
+                // Reload user questions
+                await loadUserQuestions();
+
+                // Reset file input
+                selectedFile = null;
+                importFileInput.value = '';
+                document.querySelector('.import-file-label').textContent = 'Click or drag a .txt file here';
+
+                let message = `Successfully imported ${count} question${count !== 1 ? 's' : ''}!`;
+                if (skippedLines > 0) {
+                    message += ` (${skippedLines} empty line${skippedLines !== 1 ? 's' : ''} skipped)`;
+                }
+                showImportStatus(message);
+            } catch (error) {
+                console.error('Import error:', error);
+                showImportStatus('Failed to import questions. Please try again.', true);
+            } finally {
+                importFileBtn.disabled = !selectedFile;
+                importFileBtn.textContent = 'Import Questions';
+            }
+        }
+
+        // ============ DASHBOARD ============
+
+        let dashboardSearchTerm = '';
+        let editingQuestionId = null;
+        let selectedQuestions = new Set();
+
+        // Open dashboard
+        function openDashboard() {
+            dashboardSearchTerm = '';
+            dashboardSearch.value = '';
+            dashboardFilter.value = 'all';
+            dashboardProjectFilter.value = 'all';
+            selectedQuestions.clear();
+            selectAllCheckbox.checked = false;
+            updateBulkActionsUI();
+            updateDashboardProjectDropdowns();
+            renderDashboard();
+            dashboardOverlay.classList.add('active');
+        }
+
+        // Update dashboard project filter and move dropdowns
+        function updateDashboardProjectDropdowns() {
+            // Update project filter
+            dashboardProjectFilter.innerHTML = '<option value="all">All Projects</option>' +
+                '<option value="uncategorized">Uncategorized</option>' +
+                userProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+            // Update move to project dropdown
+            moveToProjectSelect.innerHTML = '<option value="">Move to...</option>' +
+                '<option value="uncategorized">Uncategorized</option>' +
+                userProjects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+        }
+
+        // Bulk move questions to project
+        async function bulkMoveToProject(projectId) {
+            const count = selectedQuestions.size;
+            if (count === 0) return;
+
+            const targetProjectId = projectId === 'uncategorized' ? null : projectId;
+            const projectName = projectId === 'uncategorized' ? 'Uncategorized' : getProjectById(projectId)?.name || 'Unknown';
+
+            try {
+                moveToProjectSelect.disabled = true;
+
+                // Update in Firestore
+                const batch = db.batch();
+                selectedQuestions.forEach(qId => {
+                    batch.update(db.collection('questions').doc(qId), { projectId: targetProjectId });
+                });
+                await batch.commit();
+
+                // Update local data
+                userQuestions.forEach(q => {
+                    if (selectedQuestions.has(q.id)) {
+                        q.projectId = targetProjectId;
+                    }
+                });
+
+                // Clear selection and refresh
+                selectedQuestions.clear();
+                updateBulkActionsUI();
+                renderDashboard();
+                renderMyQuestionsList();
+                mergeQuestions();
+
+            } catch (error) {
+                console.error('Error moving questions:', error);
+                alert('Could not move questions. Please try again.');
+            } finally {
+                moveToProjectSelect.disabled = false;
+                moveToProjectSelect.value = '';
+            }
+        }
+
+        // Close dashboard
+        function closeDashboard() {
+            dashboardOverlay.classList.remove('active');
+            editingQuestionId = null;
+            selectedQuestions.clear();
+        }
+
+        // Render dashboard list
+        function renderDashboard() {
+            const filterValue = dashboardFilter.value;
+            const projectFilterValue = dashboardProjectFilter.value;
+            const now = new Date();
+
+            const filtered = userQuestions.filter(q => {
+                // Text search filter
+                if (!q.text.toLowerCase().includes(dashboardSearchTerm.toLowerCase())) {
+                    return false;
+                }
+
+                // Project filter
+                if (projectFilterValue !== 'all') {
+                    if (projectFilterValue === 'uncategorized') {
+                        if (q.projectId !== null) return false;
+                    } else {
+                        if (q.projectId !== projectFilterValue) return false;
+                    }
+                }
+
+                // Date filter (questions without timestamps are included in all filters)
+                if (filterValue !== 'all' && q.createdAt) {
+                    try {
+                        const createdDate = q.createdAt.toDate();
+
+                        if (filterValue === 'today') {
+                            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            if (createdDate < startOfDay) return false;
+                        } else if (filterValue === 'week') {
+                            const startOfWeek = new Date(now);
+                            startOfWeek.setDate(now.getDate() - now.getDay());
+                            startOfWeek.setHours(0, 0, 0, 0);
+                            if (createdDate < startOfWeek) return false;
+                        } else if (filterValue === 'month') {
+                            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                            if (createdDate < startOfMonth) return false;
+                        }
+                    } catch (e) {
+                        // If timestamp is invalid, include the question
+                        console.warn('Invalid timestamp for question:', q.id);
+                    }
+                }
+                // Questions without timestamps are included in all date filters
+
+                return true;
+            });
+
+            dashboardStats.textContent = `${filtered.length} of ${userQuestions.length} questions`;
+
+            if (filtered.length === 0) {
+                dashboardList.innerHTML = `<li class="dashboard-empty">${
+                    userQuestions.length === 0 ? 'No questions yet. Add some in Settings!' : 'No questions match your search'
+                }</li>`;
+                return;
+            }
+
+            dashboardList.innerHTML = filtered.map(q => {
+                const project = q.projectId ? getProjectById(q.projectId) : null;
+                const colorDot = project
+                    ? `<span class="project-color-dot" style="background: ${project.color};" title="${escapeHtml(project.name)}"></span>`
+                    : '<span class="project-color-dot" style="background: #ccc;" title="Uncategorized"></span>';
+                return `
+                <li class="dashboard-item" data-id="${q.id}">
+                    <input type="checkbox" class="dashboard-item-checkbox"
+                           ${selectedQuestions.has(q.id) ? 'checked' : ''}
+                           onchange="toggleQuestionSelection('${q.id}')">
+                    ${colorDot}
+                    <span class="dashboard-item-text ${editingQuestionId === q.id ? 'editing' : ''}">${escapeHtml(q.text)}</span>
+                    <input type="text" class="dashboard-item-input ${editingQuestionId === q.id ? 'editing' : ''}" value="${escapeHtml(q.text)}">
+                    <div class="dashboard-item-actions">
+                        ${editingQuestionId === q.id ? `
+                            <button class="dashboard-btn save" onclick="saveQuestionEdit('${q.id}')">Save</button>
+                            <button class="dashboard-btn" onclick="cancelEdit()">Cancel</button>
+                        ` : `
+                            <button class="dashboard-btn" onclick="startEdit('${q.id}')">Edit</button>
+                            <button class="dashboard-btn delete" onclick="confirmDeleteQuestion('${q.id}')">Delete</button>
+                        `}
+                    </div>
+                </li>
+            `}).join('');
+
+            // Update select all checkbox state
+            updateSelectAllState(filtered);
+        }
+
+        // Start editing a question
+        function startEdit(questionId) {
+            editingQuestionId = questionId;
+            renderDashboard();
+            // Focus the input
+            const input = document.querySelector(`.dashboard-item[data-id="${questionId}"] .dashboard-item-input`);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
+
+        // Cancel editing
+        function cancelEdit() {
+            editingQuestionId = null;
+            renderDashboard();
+        }
+
+        // Save question edit
+        async function saveQuestionEdit(questionId) {
+            const input = document.querySelector(`.dashboard-item[data-id="${questionId}"] .dashboard-item-input`);
+            const newText = input.value.trim();
+
+            if (!newText) {
+                alert('Question cannot be empty');
+                return;
+            }
+
+            try {
+                await db.collection('questions').doc(questionId).update({
+                    text: newText
+                });
+
+                // Update local data
+                const question = userQuestions.find(q => q.id === questionId);
+                if (question) {
+                    question.text = newText;
+                }
+
+                editingQuestionId = null;
+                renderDashboard();
+                renderMyQuestionsList();
+                mergeQuestions();
+            } catch (error) {
+                console.error('Error updating question:', error);
+                alert('Could not update question. Please try again.');
+            }
+        }
+
+        // Confirm delete question
+        function confirmDeleteQuestion(questionId) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                deleteQuestionFromDashboard(questionId);
+            }
+        }
+
+        // Delete question from dashboard
+        async function deleteQuestionFromDashboard(questionId) {
+            try {
+                await db.collection('questions').doc(questionId).delete();
+
+                userQuestions = userQuestions.filter(q => q.id !== questionId);
+                renderDashboard();
+                renderMyQuestionsList();
+                mergeQuestions();
+                updateQuestionCount();
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                alert('Could not delete question. Please try again.');
+            }
+        }
+
+        // Handle dashboard search
+        function handleDashboardSearch() {
+            dashboardSearchTerm = dashboardSearch.value;
+            renderDashboard();
+        }
+
+        // Toggle individual question selection
+        function toggleQuestionSelection(questionId) {
+            if (selectedQuestions.has(questionId)) {
+                selectedQuestions.delete(questionId);
+            } else {
+                selectedQuestions.add(questionId);
+            }
+            updateBulkActionsUI();
+            updateSelectAllState(getFilteredQuestions());
+        }
+
+        // Get currently filtered questions
+        function getFilteredQuestions() {
+            const filterValue = dashboardFilter.value;
+            const projectFilterValue = dashboardProjectFilter.value;
+            const now = new Date();
+
+            return userQuestions.filter(q => {
+                if (!q.text.toLowerCase().includes(dashboardSearchTerm.toLowerCase())) {
+                    return false;
+                }
+                // Project filter
+                if (projectFilterValue !== 'all') {
+                    if (projectFilterValue === 'uncategorized') {
+                        if (q.projectId !== null) return false;
+                    } else {
+                        if (q.projectId !== projectFilterValue) return false;
+                    }
+                }
+                // Date filter (questions without timestamps are included in all filters)
+                if (filterValue !== 'all' && q.createdAt) {
+                    try {
+                        const createdDate = q.createdAt.toDate();
+                        if (filterValue === 'today') {
+                            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            if (createdDate < startOfDay) return false;
+                        } else if (filterValue === 'week') {
+                            const startOfWeek = new Date(now);
+                            startOfWeek.setDate(now.getDate() - now.getDay());
+                            startOfWeek.setHours(0, 0, 0, 0);
+                            if (createdDate < startOfWeek) return false;
+                        } else if (filterValue === 'month') {
+                            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                            if (createdDate < startOfMonth) return false;
+                        }
+                    } catch (e) {
+                        // If timestamp is invalid, include the question
+                    }
+                }
+                return true;
+            });
+        }
+
+        // Update select all checkbox state
+        function updateSelectAllState(filtered) {
+            if (filtered.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                const allSelected = filtered.every(q => selectedQuestions.has(q.id));
+                const someSelected = filtered.some(q => selectedQuestions.has(q.id));
+                selectAllCheckbox.checked = allSelected;
+                selectAllCheckbox.indeterminate = someSelected && !allSelected;
+            }
+        }
+
+        // Update bulk actions UI
+        function updateBulkActionsUI() {
+            const count = selectedQuestions.size;
+            if (count > 0) {
+                bulkActions.classList.add('visible');
+                selectedCountDisplay.textContent = `${count} selected`;
+            } else {
+                bulkActions.classList.remove('visible');
+            }
+        }
+
+        // Toggle select all
+        function toggleSelectAll() {
+            const filtered = getFilteredQuestions();
+            const allSelected = filtered.every(q => selectedQuestions.has(q.id));
+
+            if (allSelected) {
+                // Deselect all filtered
+                filtered.forEach(q => selectedQuestions.delete(q.id));
+            } else {
+                // Select all filtered
+                filtered.forEach(q => selectedQuestions.add(q.id));
+            }
+
+            updateBulkActionsUI();
+            renderDashboard();
+        }
+
+        // Bulk delete selected questions
+        async function bulkDeleteQuestions() {
+            const count = selectedQuestions.size;
+            if (count === 0) return;
+
+            const confirmed = confirm(`Are you sure you want to delete ${count} question${count !== 1 ? 's' : ''}? This cannot be undone.`);
+            if (!confirmed) return;
+
+            try {
+                bulkDeleteBtn.disabled = true;
+                bulkDeleteBtn.textContent = 'Deleting...';
+
+                // Delete in batches (Firestore batch limit is 500)
+                const idsToDelete = Array.from(selectedQuestions);
+                const batchSize = 400;
+
+                for (let i = 0; i < idsToDelete.length; i += batchSize) {
+                    const batch = db.batch();
+                    const batchIds = idsToDelete.slice(i, i + batchSize);
+
+                    batchIds.forEach(id => {
+                        batch.delete(db.collection('questions').doc(id));
+                    });
+
+                    await batch.commit();
+                }
+
+                // Update local data
+                userQuestions = userQuestions.filter(q => !selectedQuestions.has(q.id));
+                selectedQuestions.clear();
+
+                // Refresh UI
+                updateBulkActionsUI();
+                renderDashboard();
+                renderMyQuestionsList();
+                mergeQuestions();
+                updateQuestionCount();
+
+            } catch (error) {
+                console.error('Error deleting questions:', error);
+                alert('Failed to delete some questions. Please try again.');
+            } finally {
+                bulkDeleteBtn.disabled = false;
+                bulkDeleteBtn.textContent = 'Delete Selected';
+            }
+        }
+
+        // ============ QUESTIONS UI ============
+
+        // Render the user's questions list
+        function renderMyQuestionsList() {
+            if (userQuestions.length === 0) {
+                myQuestionsList.innerHTML = '<div class="no-questions-msg">No custom questions yet</div>';
+                return;
+            }
+
+            myQuestionsList.innerHTML = userQuestions.map(q => {
+                const project = q.projectId ? getProjectById(q.projectId) : null;
+                const colorDot = project
+                    ? `<span class="project-color-dot" style="background: ${project.color};" title="${escapeHtml(project.name)}"></span>`
+                    : '<span class="project-color-dot" style="background: #ccc;" title="Uncategorized"></span>';
+                return `
+                <div class="my-question-item">
+                    ${colorDot}
+                    <span class="my-question-text" title="${escapeHtml(q.text)}">${escapeHtml(q.text)}</span>
+                    <button class="delete-question-btn" onclick="deleteQuestion('${q.id}')">Delete</button>
+                </div>
+            `}).join('');
+        }
+
+        // Update question count display
+        function updateQuestionCount() {
+            const defaultCount = defaultQuestions.length;
+            const customCount = userQuestions.length;
+            questionCount.textContent = `${defaultCount} default + ${customCount} custom = ${defaultCount + customCount} total questions`;
+        }
+
+        // Merge default and user questions
+        function mergeQuestions() {
+            questions = [];
+
+            // Check if we're using a specific auto-cycle project
+            if (mode === 'auto' && autoProjectSelection !== 'all') {
+                // Use only the selected source for auto-cycle
+                if (autoProjectSelection === 'default') {
+                    questions.push(...defaultQuestions);
+                } else if (autoProjectSelection === 'uncategorized') {
+                    userQuestions.forEach(q => {
+                        if (q.projectId === null) {
+                            questions.push(q.text);
+                        }
+                    });
+                } else {
+                    // Specific project selected
+                    userQuestions.forEach(q => {
+                        if (q.projectId === autoProjectSelection) {
+                            questions.push(q.text);
+                        }
+                    });
+                }
+            } else {
+                // Use all enabled sources (manual mode or "all" in auto mode)
+                if (enabledSources.default) {
+                    questions.push(...defaultQuestions);
+                }
+
+                userQuestions.forEach(q => {
+                    if (q.projectId === null) {
+                        if (enabledSources.uncategorized) {
+                            questions.push(q.text);
+                        }
+                    } else {
+                        if (enabledSources.projects[q.projectId]) {
+                            questions.push(q.text);
+                        }
+                    }
+                });
+            }
+
+            updateQuestionCount();
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ AUDIO ============
+
         function initAudio() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
         }
 
-        // Play a pleasant notification sound
         function playNotificationSound() {
             if (!audioContext) return;
 
@@ -536,9 +2777,8 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
 
-            // Pleasant two-tone chime
-            oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
-            oscillator.frequency.setValueAtTime(1108.73, audioContext.currentTime + 0.1); // C#6
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(1108.73, audioContext.currentTime + 0.1);
 
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
@@ -547,14 +2787,14 @@
             oscillator.stop(audioContext.currentTime + 0.3);
         }
 
-        // Format seconds to MM:SS
+        // ============ TIMER FUNCTIONS ============
+
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Update session timer display
         function updateSessionTimerDisplay() {
             sessionTimerDisplay.textContent = formatTime(sessionTimeRemaining);
             sessionTimerDisplay.classList.remove('running', 'warning', 'critical');
@@ -570,7 +2810,6 @@
             }
         }
 
-        // Update question timer display
         function updateQuestionTimerDisplay() {
             questionTimerDisplay.textContent = formatTime(questionTimeRemaining);
             questionTimerDisplay.classList.remove('warning', 'critical');
@@ -582,7 +2821,6 @@
             }
         }
 
-        // Visual flash effect
         function flashQuestionBox() {
             questionBox.classList.add('flash');
             setTimeout(() => {
@@ -590,7 +2828,6 @@
             }, 300);
         }
 
-        // Auto-advance to next question
         function autoAdvance() {
             flashQuestionBox();
             playNotificationSound();
@@ -598,7 +2835,6 @@
             resetQuestionTimer();
         }
 
-        // Start session timer
         function startSessionTimer() {
             sessionTimeRemaining = sessionDuration;
             updateSessionTimerDisplay();
@@ -613,7 +2849,6 @@
             }, 1000);
         }
 
-        // Start question timer (auto mode only)
         function startQuestionTimer() {
             questionTimeRemaining = questionInterval;
             updateQuestionTimerDisplay();
@@ -628,13 +2863,11 @@
             }, 1000);
         }
 
-        // Reset question timer
         function resetQuestionTimer() {
             questionTimeRemaining = questionInterval;
             updateQuestionTimerDisplay();
         }
 
-        // Start session
         function startSession() {
             initAudio();
             isSessionRunning = true;
@@ -649,7 +2882,6 @@
             }
         }
 
-        // Stop session
         function stopSession() {
             isSessionRunning = false;
             startSessionBtn.style.display = 'inline-block';
@@ -670,19 +2902,20 @@
             questionTimerContainer.classList.remove('visible');
         }
 
-        // End session (timer ran out)
         function endSession() {
             stopSession();
             sessionEndedOverlay.classList.add('active');
             playNotificationSound();
         }
 
-        // Load questions from file
+        // ============ QUESTION FUNCTIONS ============
+
         async function loadQuestions() {
             try {
                 const response = await fetch('questions.txt');
                 const text = await response.text();
-                questions = text.split('\n').filter(q => q.trim() !== '');
+                defaultQuestions = text.split('\n').filter(q => q.trim() !== '');
+                mergeQuestions();
 
                 if (questions.length > 0) {
                     showRandomQuestion();
@@ -696,7 +2929,6 @@
             }
         }
 
-        // Get a random question that's different from the current one
         function getRandomQuestion() {
             if (questions.length === 0) return null;
             if (questions.length === 1) return questions[0];
@@ -712,11 +2944,9 @@
             return newQuestion;
         }
 
-        // Show a random question and add to history
         function showRandomQuestion() {
             const question = getRandomQuestion();
             if (question) {
-                // Remove any forward history when going to a new random question
                 history = history.slice(0, historyIndex + 1);
                 history.push(question);
                 historyIndex = history.length - 1;
@@ -726,12 +2956,10 @@
             }
         }
 
-        // Display a question with animation
         function displayQuestion(question) {
             questionText.textContent = question;
         }
 
-        // Animate the box click
         function animateClick() {
             questionBox.classList.add('clicked');
             setTimeout(() => {
@@ -739,84 +2967,242 @@
             }, 100);
         }
 
-        // Update navigation button states
         function updateButtons() {
             backButton.disabled = historyIndex <= 0;
         }
 
-        // Go to previous question
         function goBack() {
             if (historyIndex > 0) {
                 historyIndex--;
                 displayQuestion(history[historyIndex]);
                 updateButtons();
 
-                // Reset question timer if in auto mode
                 if (isSessionRunning && mode === 'auto') {
                     resetQuestionTimer();
                 }
             }
         }
 
-        // Go to next question (new random one)
         function goNext() {
             animateClick();
             showRandomQuestion();
 
-            // Reset question timer if in auto mode
             if (isSessionRunning && mode === 'auto') {
                 resetQuestionTimer();
             }
         }
 
-        // Open settings
+        // ============ SETTINGS FUNCTIONS ============
+
         function openSettings() {
             sessionMinutesInput.value = Math.floor(sessionDuration / 60);
             questionSecondsInput.value = questionInterval;
             settingsOverlay.classList.add('active');
         }
 
-        // Close settings
         function closeSettings() {
+            // Save settings when closing
+            sessionDuration = parseInt(sessionMinutesInput.value) * 60;
+            questionInterval = parseInt(questionSecondsInput.value);
             settingsOverlay.classList.remove('active');
         }
 
-        // Save settings
-        function saveSettings() {
-            sessionDuration = parseInt(sessionMinutesInput.value) * 60;
-            questionInterval = parseInt(questionSecondsInput.value);
-            closeSettings();
+        function switchSettingsTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+            // Update tab content
+            document.querySelectorAll('.settings-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
         }
 
-        // Update mode selection
         function selectMode(selectedMode) {
             mode = selectedMode;
             modeOptions.forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.mode === selectedMode);
             });
             autoSettings.classList.toggle('visible', selectedMode === 'auto');
+            document.getElementById('autoSettings2').classList.toggle('visible', selectedMode === 'auto');
+            mergeQuestions(); // Re-merge questions based on new mode
         }
 
-        // Event listeners
+        // ============ EVENT LISTENERS ============
+
+        // Navigation
         questionBox.addEventListener('click', goNext);
         backButton.addEventListener('click', goBack);
         nextButton.addEventListener('click', goNext);
 
+        // Settings
         settingsButton.addEventListener('click', openSettings);
         closeSettingsBtn.addEventListener('click', closeSettings);
-        saveSettingsBtn.addEventListener('click', saveSettings);
+
+        // Settings tabs
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab));
+        });
 
         modeOptions.forEach(option => {
             option.addEventListener('click', () => selectMode(option.dataset.mode));
         });
 
+        // Session controls
         startSessionBtn.addEventListener('click', startSession);
         stopSessionBtn.addEventListener('click', stopSession);
         dismissSessionEndedBtn.addEventListener('click', () => {
             sessionEndedOverlay.classList.remove('active');
         });
 
-        // Close settings on overlay click (outside panel)
+        // Auth
+        signInBtn.addEventListener('click', signInWithGoogle);
+        signOutBtn.addEventListener('click', () => {
+            profileDropdown.classList.remove('active');
+            signOut();
+        });
+
+        // Profile dropdown toggle
+        userAvatar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && e.target !== userAvatar) {
+                profileDropdown.classList.remove('active');
+            }
+        });
+
+        // Projects
+        newProjectBtn.addEventListener('click', () => showProjectForm());
+        cancelProjectBtn.addEventListener('click', hideProjectForm);
+
+        saveProjectBtn.addEventListener('click', () => {
+            const name = projectNameInput.value.trim();
+            if (!name) {
+                alert('Please enter a project name');
+                return;
+            }
+            if (editingProjectId) {
+                updateProject(editingProjectId, name, selectedProjectColor);
+            } else {
+                createProject(name, selectedProjectColor);
+            }
+        });
+
+        projectNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveProjectBtn.click();
+            }
+        });
+
+        // Color picker
+        colorPicker.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-option')) {
+                selectedProjectColor = e.target.dataset.color;
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.color === selectedProjectColor);
+                });
+            }
+        });
+
+        // Question sources
+        sourceDefault.addEventListener('change', (e) => {
+            enabledSources.default = e.target.checked;
+            mergeQuestions();
+        });
+
+        sourceUncategorized.addEventListener('change', (e) => {
+            enabledSources.uncategorized = e.target.checked;
+            mergeQuestions();
+        });
+
+        // Auto project selection
+        autoProjectSelect.addEventListener('change', (e) => {
+            autoProjectSelection = e.target.value;
+            mergeQuestions();
+        });
+
+        // Add question
+        addQuestionBtn.addEventListener('click', () => {
+            addQuestion(newQuestionInput.value);
+        });
+
+        newQuestionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addQuestion(newQuestionInput.value);
+            }
+        });
+
+        // Import toggle
+        // Import tabs
+        importTabs.forEach(tab => {
+            tab.addEventListener('click', () => switchImportTab(tab.dataset.tab));
+        });
+
+        // Paste import
+        importPasteBtn.addEventListener('click', handlePasteImport);
+
+        // File import
+        importFileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        importFileArea.addEventListener('click', () => {
+            importFileInput.click();
+        });
+
+        // Drag and drop
+        importFileArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            importFileArea.classList.add('dragover');
+        });
+
+        importFileArea.addEventListener('dragleave', () => {
+            importFileArea.classList.remove('dragover');
+        });
+
+        importFileArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            importFileArea.classList.remove('dragover');
+            handleFileSelect(e.dataTransfer.files[0]);
+        });
+
+        importFileBtn.addEventListener('click', handleFileImport);
+
+        // Dashboard
+        openDashboardBtn.addEventListener('click', () => {
+            closeSettings();
+            openDashboard();
+        });
+
+        closeDashboardBtn.addEventListener('click', closeDashboard);
+        closeDashboardBtn2.addEventListener('click', closeDashboard);
+
+        dashboardSearch.addEventListener('input', handleDashboardSearch);
+
+        dashboardFilter.addEventListener('change', renderDashboard);
+        dashboardProjectFilter.addEventListener('change', renderDashboard);
+
+        moveToProjectSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                bulkMoveToProject(e.target.value);
+            }
+        });
+
+        selectAllCheckbox.addEventListener('change', toggleSelectAll);
+        bulkDeleteBtn.addEventListener('click', bulkDeleteQuestions);
+
+        dashboardOverlay.addEventListener('click', (e) => {
+            if (e.target === dashboardOverlay) {
+                closeDashboard();
+            }
+        });
+
+        // Close settings on overlay click
         settingsOverlay.addEventListener('click', (e) => {
             if (e.target === settingsOverlay) {
                 closeSettings();
@@ -825,7 +3211,6 @@
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            // Don't handle if in settings or input focused
             if (settingsOverlay.classList.contains('active') ||
                 document.activeElement.tagName === 'INPUT') {
                 return;
@@ -843,7 +3228,7 @@
             }
         });
 
-        // Start the app
+        // ============ INIT ============
         loadQuestions();
     </script>
 </body>
